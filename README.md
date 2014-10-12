@@ -74,7 +74,7 @@ Command line syntax:
     The /G switch lets the user play the maze in the console after
     all other switches are processed. Console output is disabled,
     if /G is specified, /P can to be used to save the maze progress.
-    /FOW only works together with /G
+    /FOW only works together with /G. /S does not works together with /G
 
     The /FOW switch:
     When specified, the maze region is invisible except for the players
