@@ -1559,6 +1559,8 @@ namespace mazeTools
                 if (args[0] == "/?")
                 {
                     help();
+                    P.OK = false;
+                    return P;
                 }
                 else
                 {
