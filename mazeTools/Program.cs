@@ -1740,6 +1740,11 @@ namespace mazeTools
                     ShowHelp();
                 }
             }
+            else if (string.IsNullOrEmpty(P.outFile) && P.outFormat == Format.Autodetect)
+            {
+                //Use UTF-8 for console if no inout file has been specified
+                P.outFormat = Format.UTF;
+            }
 
             return P;
         }
