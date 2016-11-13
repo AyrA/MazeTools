@@ -175,10 +175,11 @@ namespace mazeTools
 #if DEBUG
             args = new string[]
             {
-                "/G",
-                "/FOW",
-                "/MAP",
-                "/H:100"
+                //"/S",
+                //"/W:10000",
+                //"/H:10000",
+                @"/R:..\Release\solved.png",
+                @"/P:..\Release\Stupidly_Large_Maze.png"
             };
 #endif
 
@@ -192,9 +193,9 @@ namespace mazeTools
                     Console.Error.WriteLine("Reading input File...");
                     try
                     {
-                        M.CurrentMaze = parseFile(P.inFile, P.inFormat, P.S);
+                        M.CurrentMaze = ParseFile(P.inFile, P.inFormat, P.S);
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         Console.Error.WriteLine("Error reading file: " + ex.Message);
                         return 1;
@@ -210,6 +211,7 @@ namespace mazeTools
                     if (P.solve)
                     {
                         Console.Error.WriteLine("solving...");
+                        M.Unsolve();
                         M.Solve();
                     }
                     else
@@ -224,7 +226,7 @@ namespace mazeTools
                     Console.Error.WriteLine("generating File...");
                     WriteFile(P.outFile, M.CurrentMaze, P.outFormat, P.S);
                 }
-                else if(!P.play)
+                else if (!P.play)
                 {
                     Console.Clear();
                     WriteConsole(M.CurrentMaze, P.outFormat);
@@ -248,40 +250,40 @@ namespace mazeTools
         /// </summary>
         /// <param name="m">Maze</param>
         /// <param name="FileName">file name for progress save function</param>
-        private static void PlayMaze(Maze m, string FileName,bool enableFOW, bool enableMAP)
+        private static void PlayMaze(Maze MazePlayer, string FileName, bool EnableFOW, bool EnableMAP)
         {
-            byte[,] maze = m.CurrentMaze;
-            
+            byte[,] maze = MazePlayer.CurrentMaze;
+
             bool[,] fow = new bool[maze.GetLength(0), maze.GetLength(1)];
 
             for (int y = 0; y < fow.GetLength(1); y++)
             {
                 for (int x = 0; x < fow.GetLength(0); x++)
                 {
-                    fow[x, y] = !enableFOW;
+                    fow[x, y] = !EnableFOW;
                 }
             }
 
-            int posX = m.Player[0], posY = m.Player[1];
-            int toX = m.End[0], toY = m.End[1];
+            int posX = MazePlayer.Player[0], posY = MazePlayer.Player[1];
+            int toX = MazePlayer.End[0], toY = MazePlayer.End[1];
 
             Console.Clear();
             Console.CursorTop += Console.WindowHeight - 1;
             Console.Write("↑→↓← - Move | [ESC] - Exit | [S] - Save");
-            if(string.IsNullOrEmpty(FileName))
+            if (string.IsNullOrEmpty(FileName))
             {
                 FileName = "game.txt";
             }
             ConsoleKeyInfo KI;
             do
             {
-                if (enableFOW)
+                if (EnableFOW)
                 {
-                    doFOW(maze, fow, posX, posY);
+                    DoFOW(maze, fow, posX, posY);
                 }
-                drawFrame(maze, fow, posX, posY);
+                DrawFrame(maze, fow, posX, posY);
 
-                if (enableFOW && !enableMAP)
+                if (EnableFOW && !EnableMAP)
                 {
                     for (int y = 0; y < fow.GetLength(1); y++)
                     {
@@ -300,8 +302,8 @@ namespace mazeTools
                         {
                             if (maze[posX, posY - 1] != Maze.CellType.WALL)
                             {
-                                setTile(maze, posX, posY, Maze.CellType.VISITED);
-                                setTile(maze, posX, --posY, Maze.CellType.PLAYER);
+                                SetTile(maze, posX, posY, Maze.CellType.VISITED);
+                                SetTile(maze, posX, --posY, Maze.CellType.PLAYER);
                             }
                         } while (IsCorridor(maze, posX, posY, Maze.Dir.N));
                         break;
@@ -310,8 +312,8 @@ namespace mazeTools
                         {
                             if (maze[posX, posY + 1] != Maze.CellType.WALL)
                             {
-                                setTile(maze, posX, posY, Maze.CellType.VISITED);
-                                setTile(maze, posX, ++posY, Maze.CellType.PLAYER);
+                                SetTile(maze, posX, posY, Maze.CellType.VISITED);
+                                SetTile(maze, posX, ++posY, Maze.CellType.PLAYER);
                             }
                         } while (IsCorridor(maze, posX, posY, Maze.Dir.S));
                         break;
@@ -320,8 +322,8 @@ namespace mazeTools
                         {
                             if (maze[posX - 1, posY] != Maze.CellType.WALL)
                             {
-                                setTile(maze, posX, posY, Maze.CellType.VISITED);
-                                setTile(maze, --posX, posY, Maze.CellType.PLAYER);
+                                SetTile(maze, posX, posY, Maze.CellType.VISITED);
+                                SetTile(maze, --posX, posY, Maze.CellType.PLAYER);
                             }
                         } while (IsCorridor(maze, posX, posY, Maze.Dir.W));
                         break;
@@ -330,8 +332,8 @@ namespace mazeTools
                         {
                             if (maze[posX + 1, posY] != Maze.CellType.WALL)
                             {
-                                setTile(maze, posX, posY, Maze.CellType.VISITED);
-                                setTile(maze, ++posX, posY, Maze.CellType.PLAYER);
+                                SetTile(maze, posX, posY, Maze.CellType.VISITED);
+                                SetTile(maze, ++posX, posY, Maze.CellType.PLAYER);
                             }
                         } while (IsCorridor(maze, posX, posY, Maze.Dir.E));
                         break;
@@ -343,8 +345,8 @@ namespace mazeTools
                 }
                 if (posX == toX && posY == toY)
                 {
-                    doFOW(maze, fow, posX, posY);
-                    drawFrame(maze, fow, posX, posY);
+                    DoFOW(maze, fow, posX, posY);
+                    DrawFrame(maze, fow, posX, posY);
                     return;
                 }
             } while (KI.Key != ConsoleKey.Escape);
@@ -357,32 +359,32 @@ namespace mazeTools
         /// <param name="fow">fof of war</param>
         /// <param name="posX">Player X</param>
         /// <param name="posY">Player Y</param>
-        private static void doFOW(byte[,] maze, bool[,] fow, int posX, int posY)
+        private static void DoFOW(byte[,] MazeArea, bool[,] FOW, int PosX, int PosY)
         {
             int x = 0;
             int y = 0;
 
-            while (maze[posX + x, posY + y] != Maze.CellType.WALL)
+            while (MazeArea[PosX + x, PosY + y] != Maze.CellType.WALL)
             {
-                setTrue(fow, posX + x, posY + y);
+                SetTrue(FOW, PosX + x, PosY + y);
                 x++;
             }
             x = 0;
-            while (maze[posX + x, posY + y] != Maze.CellType.WALL)
+            while (MazeArea[PosX + x, PosY + y] != Maze.CellType.WALL)
             {
-                setTrue(fow, posX + x, posY + y);
+                SetTrue(FOW, PosX + x, PosY + y);
                 x--;
             }
             x = 0;
-            while (maze[posX + x, posY + y] != Maze.CellType.WALL)
+            while (MazeArea[PosX + x, PosY + y] != Maze.CellType.WALL)
             {
-                setTrue(fow, posX + x, posY + y);
+                SetTrue(FOW, PosX + x, PosY + y);
                 y++;
             }
             y = 0;
-            while (maze[posX + x, posY + y] != Maze.CellType.WALL)
+            while (MazeArea[PosX + x, PosY + y] != Maze.CellType.WALL)
             {
-                setTrue(fow, posX + x, posY + y);
+                SetTrue(FOW, PosX + x, PosY + y);
                 y--;
             }
         }
@@ -393,17 +395,17 @@ namespace mazeTools
         /// <param name="fow">fow</param>
         /// <param name="x">x position of center</param>
         /// <param name="y">y position of center</param>
-        private static void setTrue(bool[,] fow, int x, int y)
+        private static void SetTrue(bool[,] FOW, int X, int Y)
         {
-            fow[x + 0, y - 1] = true; //N
-            fow[x + 1, y - 1] = true; //NE
-            fow[x + 1, y + 0] = true; //E
-            fow[x + 1, y + 1] = true; //SE
-            fow[x + 0, y + 1] = true; //S
-            fow[x - 1, y + 1] = true; //SW
-            fow[x - 1, y + 0] = true; //W
-            fow[x - 1, y - 1] = true; //NW
-            fow[x + 0, y + 0] = true; //Center
+            FOW[X + 0, Y - 1] = true; //N
+            FOW[X + 1, Y - 1] = true; //NE
+            FOW[X + 1, Y + 0] = true; //E
+            FOW[X + 1, Y + 1] = true; //SE
+            FOW[X + 0, Y + 1] = true; //S
+            FOW[X - 1, Y + 1] = true; //SW
+            FOW[X - 1, Y + 0] = true; //W
+            FOW[X - 1, Y - 1] = true; //NW
+            FOW[X + 0, Y + 0] = true; //Center
         }
 
         /// <summary>
@@ -413,13 +415,13 @@ namespace mazeTools
         /// <param name="posX">X position</param>
         /// <param name="posY">Y position</param>
         /// <param name="tile">new tile value</param>
-        private static void setTile(byte[,] maze, int posX, int posY, byte tile)
+        private static void SetTile(byte[,] MazeArea, int PosX, int PosY, byte Tile)
         {
-            if (maze[posX, posY] == Maze.CellType.WAY ||
-                maze[posX, posY] == Maze.CellType.PLAYER ||
-                maze[posX, posY] == Maze.CellType.VISITED)
+            if (MazeArea[PosX, PosY] == Maze.CellType.WAY ||
+                MazeArea[PosX, PosY] == Maze.CellType.PLAYER ||
+                MazeArea[PosX, PosY] == Maze.CellType.VISITED)
             {
-                maze[posX, posY] = tile;
+                MazeArea[PosX, PosY] = Tile;
             }
         }
 
@@ -431,23 +433,23 @@ namespace mazeTools
         /// <param name="posY">Y position</param>
         /// <param name="dir">direction of player</param>
         /// <returns>true, if corridor</returns>
-        private static bool IsCorridor(byte[,] maze, int posX, int posY, Maze.Dir dir)
+        private static bool IsCorridor(byte[,] MazeArea, int PosX, int PosY, Maze.Dir Direction)
         {
-            if (dir == Maze.Dir.S || dir == Maze.Dir.N)
+            if (Direction == Maze.Dir.S || Direction == Maze.Dir.N)
             {
                 return
-                    maze[posX - 1, posY] == Maze.CellType.WALL &&
-                    maze[posX + 1, posY] == Maze.CellType.WALL &&
-                    maze[posX, posY - 1] != Maze.CellType.WALL &&
-                    maze[posX, posY + 1] != Maze.CellType.WALL;
+                    MazeArea[PosX - 1, PosY] == Maze.CellType.WALL &&
+                    MazeArea[PosX + 1, PosY] == Maze.CellType.WALL &&
+                    MazeArea[PosX, PosY - 1] != Maze.CellType.WALL &&
+                    MazeArea[PosX, PosY + 1] != Maze.CellType.WALL;
             }
             else
             {
                 return
-                    maze[posX - 1, posY] != Maze.CellType.WALL &&
-                    maze[posX + 1, posY] != Maze.CellType.WALL &&
-                    maze[posX, posY - 1] == Maze.CellType.WALL &&
-                    maze[posX, posY + 1] == Maze.CellType.WALL;
+                    MazeArea[PosX - 1, PosY] != Maze.CellType.WALL &&
+                    MazeArea[PosX + 1, PosY] != Maze.CellType.WALL &&
+                    MazeArea[PosX, PosY - 1] == Maze.CellType.WALL &&
+                    MazeArea[PosX, PosY + 1] == Maze.CellType.WALL;
             }
         }
 
@@ -457,10 +459,10 @@ namespace mazeTools
         /// <param name="maze">maze</param>
         /// <param name="posX">X position of center (player)</param>
         /// <param name="posY">Y position of center (player)</param>
-        private static void drawFrame(byte[,] maze, bool[,] fow, int posX, int posY)
+        private static void DrawFrame(byte[,] MazeArea, bool[,] FOW, int PosX, int PosY)
         {
-            byte[,] region = getRegion(maze, posX, posY, Console.WindowWidth - 1, Console.WindowHeight - 1);
-            bool[,] fowregion = getRegion(fow, posX, posY, Console.WindowWidth - 1, Console.WindowHeight - 1);
+            byte[,] region = GetRegion(MazeArea, PosX, PosY, Console.WindowWidth - 1, Console.WindowHeight - 1);
+            bool[,] fowregion = GetRegion(FOW, PosX, PosY, Console.WindowWidth - 1, Console.WindowHeight - 1);
             Console.SetCursorPosition(0, 0);
             Console.ForegroundColor = ConsoleColor.White;
 
@@ -491,7 +493,7 @@ namespace mazeTools
                             case Maze.CellType.VISITED:
                                 Console.ForegroundColor = ConsoleColor.Yellow;
                                 //Console.Write(Chars.UTF.VISITED);
-                                Console.Write(getFancyTile(region, x, y, Chars.Corners.Unknown));
+                                Console.Write(GetFancyTile(region, x, y, Chars.Corners.Unknown));
                                 Console.ForegroundColor = ConsoleColor.White;
                                 break;
                             case Maze.CellType.PLAYER:
@@ -525,77 +527,77 @@ namespace mazeTools
         /// <param name="w">maximum width</param>
         /// <param name="h">maximum height</param>
         /// <returns>fow subregion</returns>
-        private static bool[,] getRegion(bool[,] fow, int posX, int posY, int w, int h)
+        private static bool[,] GetRegion(bool[,] FOW, int PosX, int PosY, int W, int H)
         {
             //fix w and h if needed
-            if (w > fow.GetLength(0))
+            if (W > FOW.GetLength(0))
             {
-                w = fow.GetLength(0);
+                W = FOW.GetLength(0);
             }
-            if (h > fow.GetLength(1))
+            if (H > FOW.GetLength(1))
             {
-                h = fow.GetLength(1);
+                H = FOW.GetLength(1);
             }
 
-            bool[,] region = new bool[w, h];
+            bool[,] region = new bool[W, H];
             int x, y, Mx, My, Mw, Mh;
 
             Mx = My = 0;
-            Mw = w;
-            Mh = h;
+            Mw = W;
+            Mh = H;
 
-            for (y = 0; y < h; y++)
+            for (y = 0; y < H; y++)
             {
-                for (x = 0; x < w; x++)
+                for (x = 0; x < W; x++)
                 {
                     region[x, y] = false;
                 }
             }
 
-            if (posX < 0)
+            if (PosX < 0)
             {
-                posX = 0;
+                PosX = 0;
             }
-            else if (posX > fow.GetLength(0) - 1)
+            else if (PosX > FOW.GetLength(0) - 1)
             {
-                posX = fow.GetLength(0) - 1;
+                PosX = FOW.GetLength(0) - 1;
             }
-            if (posY < 0)
+            if (PosY < 0)
             {
-                posY = 0;
+                PosY = 0;
             }
-            else if (posY > fow.GetLength(1) - 1)
+            else if (PosY > FOW.GetLength(1) - 1)
             {
-                posY = fow.GetLength(1) - 1;
+                PosY = FOW.GetLength(1) - 1;
             }
 
             //try to center the player
-            Mx = posX - w / 2;
-            My = posY - h / 2;
+            Mx = PosX - W / 2;
+            My = PosY - H / 2;
 
             if (Mx < 0)
             {
                 Mx = 0;
             }
-            else if (Mx + w > fow.GetLength(0))
+            else if (Mx + W > FOW.GetLength(0))
             {
-                Mx = fow.GetLength(0) - w;
+                Mx = FOW.GetLength(0) - W;
             }
             if (My < 0)
             {
                 My = 0;
             }
-            else if (My + h > fow.GetLength(1))
+            else if (My + H > FOW.GetLength(1))
             {
-                My = fow.GetLength(1) - h;
+                My = FOW.GetLength(1) - H;
             }
 
             //Fill maze
-            for (y = My; y - My < Mh && y - My < fow.GetLength(1); y++)
+            for (y = My; y - My < Mh && y - My < FOW.GetLength(1); y++)
             {
-                for (x = Mx; x - Mx < Mw && x - Mx < fow.GetLength(0); x++)
+                for (x = Mx; x - Mx < Mw && x - Mx < FOW.GetLength(0); x++)
                 {
-                    region[x - Mx, y - My] = fow[x, y];
+                    region[x - Mx, y - My] = FOW[x, y];
                 }
             }
 
@@ -610,40 +612,40 @@ namespace mazeTools
         /// <param name="y">position of tile (Y)</param>
         /// <param name="unknown">return value for unknown state</param>
         /// <returns>corner piece (from Chars.Corners)</returns>
-        private static char getFancyTile(byte[,] maze, int x, int y, char unknown)
+        private static char GetFancyTile(byte[,] MazeArea, int X, int Y, char Unknown)
         {
             byte N, S, E, W;
             N = S = E = W = Maze.CellType.INVALID;
 
-            if (y == 0)
+            if (Y == 0)
             {
                 N = Maze.CellType.WAY;
-                S = maze[x, y + 1];
+                S = MazeArea[X, Y + 1];
             }
-            else if (y > maze.GetLength(1) - 2)
+            else if (Y > MazeArea.GetLength(1) - 2)
             {
                 S = Maze.CellType.WAY;
-                N = maze[x, y - 1];
+                N = MazeArea[X, Y - 1];
             }
             else
             {
-                N = maze[x, y - 1];
-                S = maze[x, y + 1];
+                N = MazeArea[X, Y - 1];
+                S = MazeArea[X, Y + 1];
             }
-            if (x == 0)
+            if (X == 0)
             {
                 W = Maze.CellType.WAY;
-                E = maze[x + 1, y];
+                E = MazeArea[X + 1, Y];
             }
-            else if (x > maze.GetLength(0) - 2)
+            else if (X > MazeArea.GetLength(0) - 2)
             {
                 E = Maze.CellType.WAY;
-                W = maze[x - 1, y];
+                W = MazeArea[X - 1, Y];
             }
             else
             {
-                E = maze[x + 1, y];
-                W = maze[x - 1, y];
+                E = MazeArea[X + 1, Y];
+                W = MazeArea[X - 1, Y];
             }
 
             if (N == Maze.CellType.VISITED &&
@@ -723,8 +725,8 @@ namespace mazeTools
             {
                 return Chars.Corners.NEW;
             }
-            
-            return unknown;
+
+            return Unknown;
         }
 
         /// <summary>
@@ -737,90 +739,90 @@ namespace mazeTools
         /// <param name="w">Width of portion</param>
         /// <param name="h">Height of portion</param>
         /// <returns>copied region</returns>
-        private static byte[,] getRegion(byte[,] maze, int posX, int posY, int w, int h)
+        private static byte[,] GetRegion(byte[,] MazeArea, int PosX, int PosY, int W, int H)
         {
             //fix w and h if needed
-            if (w > maze.GetLength(0))
+            if (W > MazeArea.GetLength(0))
             {
-                w = maze.GetLength(0);
+                W = MazeArea.GetLength(0);
             }
-            if (h > maze.GetLength(1))
+            if (H > MazeArea.GetLength(1))
             {
-                h = maze.GetLength(1);
+                H = MazeArea.GetLength(1);
             }
 
-            byte[,] region = new byte[w, h];
+            byte[,] region = new byte[W, H];
             int x, y, Mx, My, Mw, Mh;
 
             Mx = My = 0;
-            Mw = w;
-            Mh = h;
+            Mw = W;
+            Mh = H;
 
-            for (y = 0; y < h; y++)
+            for (y = 0; y < H; y++)
             {
-                for (x = 0; x < w; x++)
+                for (x = 0; x < W; x++)
                 {
                     region[x, y] = Maze.CellType.WAY;
                 }
             }
 
-            if (posX < 0)
+            if (PosX < 0)
             {
-                posX = 0;
+                PosX = 0;
             }
-            else if (posX > maze.GetLength(0) - 1)
+            else if (PosX > MazeArea.GetLength(0) - 1)
             {
-                posX = maze.GetLength(0) - 1;
+                PosX = MazeArea.GetLength(0) - 1;
             }
-            if (posY < 0)
+            if (PosY < 0)
             {
-                posY = 0;
+                PosY = 0;
             }
-            else if (posY > maze.GetLength(1) - 1)
+            else if (PosY > MazeArea.GetLength(1) - 1)
             {
-                posY = maze.GetLength(1) - 1;
+                PosY = MazeArea.GetLength(1) - 1;
             }
 
             //try to center the player
-            Mx = posX - w / 2;
-            My = posY - h / 2;
+            Mx = PosX - W / 2;
+            My = PosY - H / 2;
 
             if (Mx < 0)
             {
                 Mx = 0;
             }
-            else if (Mx + w > maze.GetLength(0))
+            else if (Mx + W > MazeArea.GetLength(0))
             {
-                Mx = maze.GetLength(0) - w;
+                Mx = MazeArea.GetLength(0) - W;
             }
             if (My < 0)
             {
                 My = 0;
             }
-            else if (My + h > maze.GetLength(1))
+            else if (My + H > MazeArea.GetLength(1))
             {
-                My = maze.GetLength(1) - h;
+                My = MazeArea.GetLength(1) - H;
             }
 
             //Fill maze
-            for (y = My; y - My < Mh && y - My < maze.GetLength(1); y++)
+            for (y = My; y - My < Mh && y - My < MazeArea.GetLength(1); y++)
             {
-                for (x = Mx; x - Mx < Mw && x - Mx < maze.GetLength(0); x++)
+                for (x = Mx; x - Mx < Mw && x - Mx < MazeArea.GetLength(0); x++)
                 {
                     //overdraw start and end with player if he is there.
                     //this is not stored on the file. Loading the maze will set
                     //the player to start if he is not found
-                    if (maze[x, y] == Maze.CellType.START && posX == x && posY == y)
+                    if (MazeArea[x, y] == Maze.CellType.START && PosX == x && PosY == y)
                     {
                         region[x - Mx, y - My] = Maze.CellType.PLAYER;
                     }
-                    else if (maze[x, y] == Maze.CellType.END && posX == x && posY == y)
+                    else if (MazeArea[x, y] == Maze.CellType.END && PosX == x && PosY == y)
                     {
                         region[x - Mx, y - My] = Maze.CellType.PLAYER;
                     }
                     else
                     {
-                        region[x - Mx, y - My] = maze[x, y];
+                        region[x - Mx, y - My] = MazeArea[x, y];
                     }
 
                 }
@@ -834,15 +836,15 @@ namespace mazeTools
         /// </summary>
         /// <param name="maze">maze</param>
         /// <param name="f">format</param>
-        private static void WriteConsole(byte[,] maze, Format f)
+        private static void WriteConsole(byte[,] MazeArea, Format FileFormat)
         {
             int w, h, x, y;
-            w = maze.GetLength(0);
-            h = maze.GetLength(1);
+            w = MazeArea.GetLength(0);
+            h = MazeArea.GetLength(1);
 
             char WALL, WAY, START, END, VISITED, PLAYER, INVALID;
 
-            switch (f)
+            switch (FileFormat)
             {
                 case Format.ASCII:
                     WALL = Chars.ASCII.WALL;
@@ -873,13 +875,13 @@ namespace mazeTools
                     INVALID = Chars.UTF.INVALID;
                     break;
                 default:
-                    throw new Exception("Invalid output format for console: " + f.ToString());
+                    throw new Exception("Invalid output format for console: " + FileFormat.ToString());
             }
             for (y = 0; y < h; y++)
             {
                 for (x = 0; x < w; x++)
                 {
-                    switch (maze[x, y])
+                    switch (MazeArea[x, y])
                     {
                         case Maze.CellType.WALL:
                             Console.ForegroundColor = ConsoleColor.White;
@@ -899,9 +901,9 @@ namespace mazeTools
                             break;
                         case Maze.CellType.VISITED:
                             Console.ForegroundColor = ConsoleColor.Yellow;
-                            if (f == Format.UTF)
+                            if (FileFormat == Format.UTF)
                             {
-                                Console.Write(getFancyTile(maze, x, y, Chars.Corners.Unknown));
+                                Console.Write(GetFancyTile(MazeArea, x, y, Chars.Corners.Unknown));
                             }
                             else
                             {
@@ -917,7 +919,7 @@ namespace mazeTools
                             Console.Write(INVALID);
                             break;
                     }
-                    if (x < w - 1 && f == Format.CSV)
+                    if (x < w - 1 && FileFormat == Format.CSV)
                     {
                         Console.Write(',');
                     }
@@ -934,16 +936,16 @@ namespace mazeTools
         /// <param name="maze">maze</param>
         /// <param name="f">format</param>
         /// <param name="scale">scale (for images only)</param>
-        private static void WriteFile(string FileName, byte[,] maze, Format f, int scale)
+        private static void WriteFile(string FileName, byte[,] MazeArea, Format FileFormat, int Scale)
         {
             int w, h, x, y;
-            w = maze.GetLength(0);
-            h = maze.GetLength(1);
+            w = MazeArea.GetLength(0);
+            h = MazeArea.GetLength(1);
 
             char WALL, WAY, START, END, VISITED, PLAYER, INVALID;
             WALL = WAY = START = END = PLAYER = VISITED = INVALID = '\0';
 
-            switch (f)
+            switch (FileFormat)
             {
                 case Format.ASCII:
                     WALL = Chars.ASCII.WALL;
@@ -989,7 +991,7 @@ namespace mazeTools
                 throw new Exception("Cannot delete existing file");
             }
 
-            if (f == Format.ASCII || f == Format.CSV || f == Format.Numbered || f == Format.UTF)
+            if (FileFormat == Format.ASCII || FileFormat == Format.CSV || FileFormat == Format.Numbered || FileFormat == Format.UTF)
             {
                 StreamWriter SW;
                 try
@@ -1005,7 +1007,7 @@ namespace mazeTools
                 {
                     for (x = 0; x < w; x++)
                     {
-                        switch (maze[x, y])
+                        switch (MazeArea[x, y])
                         {
                             case Maze.CellType.WALL:
                                 SW.Write(WALL);
@@ -1020,9 +1022,9 @@ namespace mazeTools
                                 SW.Write(END);
                                 break;
                             case Maze.CellType.VISITED:
-                                if (f == Format.UTF)
+                                if (FileFormat == Format.UTF)
                                 {
-                                    SW.Write(getFancyTile(maze, x, y, Chars.Corners.Unknown));
+                                    SW.Write(GetFancyTile(MazeArea, x, y, Chars.Corners.Unknown));
                                 }
                                 else
                                 {
@@ -1036,7 +1038,7 @@ namespace mazeTools
                                 SW.Write(INVALID);
                                 break;
                         }
-                        if (x < w - 1 && f == Format.CSV)
+                        if (x < w - 1 && FileFormat == Format.CSV)
                         {
                             SW.Write(',');
                         }
@@ -1051,13 +1053,13 @@ namespace mazeTools
                 SW.Close();
                 SW.Dispose();
             }
-            else if (f == Format.Binary)
+            else if (FileFormat == Format.Binary)
             {
-                WriteBinary(FileName, maze);
+                WriteBinary(FileName, MazeArea);
             }
-            else if (f == Format.Image)
+            else if (FileFormat == Format.Image)
             {
-                WriteImage(FileName, maze, scale);
+                WriteImage(FileName, MazeArea, Scale);
             }
         }
 
@@ -1066,11 +1068,11 @@ namespace mazeTools
         /// </summary>
         /// <param name="FileName">file name</param>
         /// <param name="maze">maze</param>
-        private static void WriteBinary(string FileName, byte[,] maze)
+        private static void WriteBinary(string FileName, byte[,] MazeArea)
         {
             int w, h, x, y;
-            w = maze.GetLength(0);
-            h = maze.GetLength(1);
+            w = MazeArea.GetLength(0);
+            h = MazeArea.GetLength(1);
 
             bool[] values = new bool[w * h];
 
@@ -1079,7 +1081,7 @@ namespace mazeTools
             {
                 for (x = 0; x < w; x++)
                 {
-                    values[x + y * w] = maze[x, y] == Maze.CellType.WALL;
+                    values[x + y * w] = MazeArea[x, y] == Maze.CellType.WALL;
                 }
             }
 
@@ -1110,7 +1112,7 @@ namespace mazeTools
         /// </summary>
         /// <param name="bits">bits</param>
         /// <returns>byte array</returns>
-        private static byte[] ToByteArray(BitArray bits)
+        private static byte[] ToByteArray(BitArray Bits)
         {
             /*
             byte[] retValue = new byte[bits.Count];
@@ -1122,15 +1124,15 @@ namespace mazeTools
             return retValue;
             //*/
             //*
-            int numBytes = bits.Count / 8;
-            if (bits.Count % 8 != 0) numBytes++;
+            int numBytes = Bits.Count / 8;
+            if (Bits.Count % 8 != 0) numBytes++;
 
             byte[] bytes = new byte[numBytes];
             int byteIndex = 0, bitIndex = 0;
 
-            for (int i = 0; i < bits.Count; i++)
+            for (int i = 0; i < Bits.Count; i++)
             {
-                if (bits[i])
+                if (Bits[i])
                     bytes[byteIndex] |= (byte)(1 << bitIndex);
 
                 bitIndex++;
@@ -1151,18 +1153,18 @@ namespace mazeTools
         /// <param name="FileName">file name</param>
         /// <param name="maze">maze</param>
         /// <param name="scale">scale</param>
-        private static void WriteImage(string FileName, byte[,] maze, int scale)
+        private static void WriteImage(string FileName, byte[,] MazeArea, int Scale)
         {
             Console.Error.WriteLine("Generating Image");
 
-            Bitmap B = new Bitmap(maze.GetLength(0), maze.GetLength(1), PixelFormat.Format16bppRgb565);
+            Bitmap B = new Bitmap(MazeArea.GetLength(0), MazeArea.GetLength(1), PixelFormat.Format16bppRgb565);
 
-            for (int y = 0; y < maze.GetLength(1); y++)
+            for (int y = 0; y < MazeArea.GetLength(1); y++)
             {
                 Console.Error.WriteLine("Drawing Row {0}...", y + 1);
-                for (int x = 0; x < maze.GetLength(0); x++)
+                for (int x = 0; x < MazeArea.GetLength(0); x++)
                 {
-                    switch (maze[x, y])
+                    switch (MazeArea[x, y])
                     {
                         case Maze.CellType.WALL:
                             B.SetPixel(x, y, Color.Black);
@@ -1189,15 +1191,15 @@ namespace mazeTools
                 }
             }
 
-            if (scale > 1)
+            if (Scale > 1)
             {
                 Console.Error.WriteLine("resizing...");
-                Bitmap Dest = new Bitmap(B.Width * scale, B.Height * scale, B.PixelFormat);
+                Bitmap Dest = new Bitmap(B.Width * Scale, B.Height * Scale, B.PixelFormat);
                 Graphics G = Graphics.FromImage(Dest);
 
                 G.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
 
-                G.DrawImage(B, 0+scale/2, 0+scale/2, Dest.Width, Dest.Height);
+                G.DrawImage(B, 0 + Scale / 2, 0 + Scale / 2, Dest.Width, Dest.Height);
 
                 G.Dispose();
 
@@ -1216,8 +1218,8 @@ namespace mazeTools
                     catch
                     {
                         Console.Error.WriteLine("cannot save original image. Save binary output...");
-                        WriteBinary(FileName + ".bin", maze);
-                        Console.Error.WriteLine("File saved as {0}.bin",FileName);
+                        WriteBinary(FileName + ".bin", MazeArea);
+                        Console.Error.WriteLine("File saved as {0}.bin", FileName);
                     }
                 }
 
@@ -1233,7 +1235,7 @@ namespace mazeTools
                 catch
                 {
                     Console.Error.WriteLine("cannot save original image. Save binary output...");
-                    WriteBinary(FileName + ".bin", maze);
+                    WriteBinary(FileName + ".bin", MazeArea);
                     Console.Error.WriteLine("File saved as {0}.bin", FileName);
                 }
                 B.Dispose();
@@ -1248,40 +1250,15 @@ namespace mazeTools
         /// <param name="format">input data format</param>
         /// <param name="scale">scale factor (images only)</param>
         /// <returns>maze</returns>
-        private static byte[,] parseFile(string p, Format format,int scale)
+        private static byte[,] ParseFile(string FileName, Format FileFormat, int Scale)
         {
-            Format f = format;
+            Format f = FileFormat;
             if (f == Format.Autodetect)
             {
-                switch (p.Substring(p.LastIndexOf('.') + 1).ToLower())
+                f = DetectFormat(FileName);
+                if (f == Format.Invalid)
                 {
-                    case "txt":
-                        switch (getFirst(p))
-                        {
-                            case Chars.Numbered.WALL:
-                                f = Format.Numbered;
-                                break;
-                            case Chars.UTF.WALL:
-                                f = Format.UTF;
-                                break;
-                            case Chars.ASCII.WALL:
-                                f = Format.ASCII;
-                                break;
-                            default:
-                                throw new Exception("Autodetect failed: text file of unknown format");
-                        }
-                        break;
-                    case "csv":
-                        f = Format.CSV;
-                        break;
-                    case "bin":
-                        f = Format.Binary;
-                        break;
-                    case "png":
-                        f = Format.Image;
-                        break;
-                    default:
-                        throw new Exception("unidentified file type: " + p.Substring(p.LastIndexOf('.') + 1).ToLower());
+                    throw new Exception("Autodetect failed: text file of unknown format");
                 }
             }
 
@@ -1290,20 +1267,20 @@ namespace mazeTools
             switch (f)
             {
                 case Format.Binary:
-                    s = FromBinary(p);
+                    s = FromBinary(FileName);
                     break;
                 case Format.Image:
-                    s = FromImage(p,scale);
+                    s = FromImage(FileName, Scale);
                     break;
                 case Format.CSV:
-                    s = File.ReadAllText(p)
+                    s = File.ReadAllText(FileName)
                         .Replace(",", "")
                         .Replace(";", "")
                         .Replace("\t", "");
                     break;
                 case Format.ASCII:
-                    s = File.ReadAllText(p)
-                        .Replace(Chars.ASCII.WALL,Chars.Numbered.WALL)
+                    s = File.ReadAllText(FileName)
+                        .Replace(Chars.ASCII.WALL, Chars.Numbered.WALL)
                         .Replace(Chars.ASCII.WAY, Chars.Numbered.WAY)
                         .Replace(Chars.ASCII.START, Chars.Numbered.START)
                         .Replace(Chars.ASCII.END, Chars.Numbered.END)
@@ -1311,10 +1288,10 @@ namespace mazeTools
                         .Replace(Chars.ASCII.PLAYER, Chars.Numbered.PLAYER);
                     break;
                 case Format.Numbered:
-                    s = File.ReadAllText(p);
+                    s = File.ReadAllText(FileName);
                     break;
                 case Format.UTF:
-                    s = File.ReadAllText(p)
+                    s = File.ReadAllText(FileName)
                         .Replace(Chars.UTF.WALL, Chars.Numbered.WALL)
                         .Replace(Chars.UTF.WAY, Chars.Numbered.WAY)
                         .Replace(Chars.UTF.START, Chars.Numbered.START)
@@ -1392,28 +1369,28 @@ namespace mazeTools
         /// <param name="p">image file</param>
         /// <param name="scale">scale</param>
         /// <returns>fle input string</returns>
-        private static string FromImage(string p,int scale)
+        private static string FromImage(string FileName, int Scale)
         {
             Console.Error.WriteLine("Opening image...");
             Bitmap B;
             try
             {
-                B = (Bitmap)Image.FromFile(p);
+                B = (Bitmap)Image.FromFile(FileName);
             }
             catch
             {
-                throw new Exception("Invalid image file: " + p);
+                throw new Exception("Invalid image file: " + FileName);
             }
 
-            StringBuilder SB = new StringBuilder((B.Width / scale) * (B.Height / scale) + (B.Height / scale * 2));
+            StringBuilder SB = new StringBuilder((B.Width / Scale) * (B.Height / Scale) + (B.Height / Scale * 2));
 
-            for (int h = 0; h < B.Height; h += scale)
+            for (int h = 0; h < B.Height; h += Scale)
             {
-                if ((h / scale + 1) % 10 == 0)
+                if ((h / Scale + 1) % 10 == 0)
                 {
                     Console.Error.WriteLine("Reading row {0}...", h + 1);
                 }
-                for (int w = 0; w < B.Width; w += scale)
+                for (int w = 0; w < B.Width; w += Scale)
                 {
                     switch (B.GetPixel(w, h).ToArgb())
                     {
@@ -1450,13 +1427,13 @@ namespace mazeTools
         /// </summary>
         /// <param name="p">file name</param>
         /// <returns>file input string</returns>
-        private static string FromBinary(string p)
+        private static string FromBinary(string FileName)
         {
             FileStream FS;
             int w, h, r;
             try
             {
-                FS = File.OpenRead(p);
+                FS = File.OpenRead(FileName);
             }
             catch
             {
@@ -1514,7 +1491,7 @@ namespace mazeTools
         /// </summary>
         /// <param name="FileName">file name</param>
         /// <returns>first char</returns>
-        private static char getFirst(string FileName)
+        private static char GetFirst(string FileName)
         {
             char INVALID = '\0';
             char[] buf = new char[] { INVALID };
@@ -1534,17 +1511,64 @@ namespace mazeTools
         }
 
         /// <summary>
+        /// Detects the format from the extension and file content
+        /// </summary>
+        /// <param name="FileName">File name</param>
+        /// <returns>Detected Format</returns>
+        private static Format DetectFormat(string FileName)
+        {
+            string Ext = "";
+            if (FileName.Contains(".") && FileName.LastIndexOf('.') > FileName.LastIndexOf('\\'))
+            {
+                Ext = FileName.ToLower().Substring(FileName.LastIndexOf('.') + 1);
+            }
+            switch (Ext)
+            {
+                case "bin":
+                    return Format.Binary;
+                case "png":
+                    return Format.Image;
+                case "csv":
+                    return Format.CSV;
+                case "txt":
+                    if (File.Exists(FileName))
+                    {
+                        switch (GetFirst(FileName))
+                        {
+                            case Chars.Numbered.WALL:
+                                return Format.Numbered;
+                            case Chars.UTF.WALL:
+                                return Format.UTF;
+                            case Chars.ASCII.WALL:
+                                return Format.ASCII;
+                            default:
+                                return Format.Invalid;
+                        }
+                    }
+                    else
+                    {
+                        return Format.UTF;
+                    }
+                default:
+                    Console.Error.WriteLine("Can't detect File format properly");
+                    ShowHelp();
+                    break;
+            }
+            return Format.Invalid;
+        }
+
+        /// <summary>
         /// parses command line arguments to the CmdParams structure and verifies arguments
         /// </summary>
         /// <param name="args">arguments</param>
         /// <returns>verified arguments</returns>
-        private static CmdParams ParseArgs(string[] args)
+        private static CmdParams ParseArgs(string[] Args)
         {
             CmdParams P = new CmdParams();
-            P.W = uneven(Console.WindowWidth - 1);
-            P.H = uneven(Console.WindowHeight - 1);
+            P.W = Uneven(Console.WindowWidth - 1);
+            P.H = Uneven(Console.WindowHeight - 1);
             P.S = 1;
-            P.outFormat = Format.UTF;
+            P.outFormat = Format.Autodetect;
             P.inFormat = Format.Autodetect;
             P.outFile = null;
             P.inFile = null;
@@ -1554,18 +1578,18 @@ namespace mazeTools
             P.map = false;
             P.OK = true;
 
-            if (args.Length > 0)
+            if (Args.Length > 0)
             {
-                if (args[0] == "/?")
+                if (Args[0] == "/?")
                 {
-                    help();
+                    ShowHelp();
                     P.OK = false;
                     return P;
                 }
                 else
                 {
                     int temp = 0;
-                    foreach (string arg in args)
+                    foreach (string arg in Args)
                     {
                         if (arg.ToUpper() == "/S")
                         {
@@ -1590,12 +1614,12 @@ namespace mazeTools
                                 case "/W:":
                                     if (int.TryParse(arg.Substring(3), out temp) && temp > 4)
                                     {
-                                        P.W = uneven(temp);
+                                        P.W = Uneven(temp);
                                     }
                                     else
                                     {
-                                        Console.WriteLine("unsupported width argument. Must be at least 5");
-                                        help();
+                                        Console.Error.WriteLine("unsupported width argument. Must be at least 5");
+                                        ShowHelp();
                                         P.OK = false;
                                         return P;
                                     }
@@ -1603,12 +1627,12 @@ namespace mazeTools
                                 case "/H:":
                                     if (int.TryParse(arg.Substring(3), out temp) && temp > 4)
                                     {
-                                        P.H = uneven(temp);
+                                        P.H = Uneven(temp);
                                     }
                                     else
                                     {
-                                        Console.WriteLine("unsupported height argument. Must be at least 5");
-                                        help();
+                                        Console.Error.WriteLine("unsupported height argument. Must be at least 5");
+                                        ShowHelp();
                                         P.OK = false;
                                         return P;
                                     }
@@ -1620,34 +1644,34 @@ namespace mazeTools
                                     }
                                     else
                                     {
-                                        Console.WriteLine("unsupported scale argument. Must be at least 1");
-                                        help();
+                                        Console.Error.WriteLine("unsupported scale argument. Must be at least 1");
+                                        ShowHelp();
                                         P.OK = false;
                                         return P;
                                     }
                                     break;
                                 case "/O:":
-                                    if (getFormat(arg.Substring(3)) != Format.Invalid)
+                                    if (GetFormat(arg.Substring(3)) != Format.Invalid)
                                     {
-                                        P.outFormat = getFormat(arg.Substring(3));
+                                        P.outFormat = GetFormat(arg.Substring(3));
                                     }
                                     else
                                     {
-                                        Console.WriteLine("Unsupported output format");
-                                        help();
+                                        Console.Error.WriteLine("Unsupported output format");
+                                        ShowHelp();
                                         P.OK = false;
                                         return P;
                                     }
                                     break;
                                 case "/I:":
-                                    if (getFormat(arg.Substring(3)) != Format.Invalid)
+                                    if (GetFormat(arg.Substring(3)) != Format.Invalid)
                                     {
-                                        P.inFormat = getFormat(arg.Substring(3));
+                                        P.inFormat = GetFormat(arg.Substring(3));
                                     }
                                     else
                                     {
-                                        Console.WriteLine("Unsupported input format. Ommit argument for auto detect");
-                                        help();
+                                        Console.Error.WriteLine("Unsupported input format. Ommit argument for auto detect");
+                                        ShowHelp();
                                         P.OK = false;
                                         return P;
                                     }
@@ -1659,8 +1683,8 @@ namespace mazeTools
                                     }
                                     else
                                     {
-                                        Console.WriteLine("input file not found: " + arg.Substring(3));
-                                        help();
+                                        Console.Error.WriteLine("input file not found: " + arg.Substring(3));
+                                        ShowHelp();
                                         P.OK = false;
                                         return P;
                                     }
@@ -1673,14 +1697,14 @@ namespace mazeTools
                                     else
                                     {
                                         Console.WriteLine("cannot create output file: " + arg);
-                                        help();
+                                        ShowHelp();
                                         P.OK = false;
                                         return P;
                                     }
                                     break;
                                 default:
                                     Console.WriteLine("unsupported argument: " + arg);
-                                    help();
+                                    ShowHelp();
                                     P.OK = false;
                                     return P;
                             }
@@ -1689,19 +1713,32 @@ namespace mazeTools
                         {
                             Console.WriteLine("Invalid argument: " + arg);
                             P.OK = false;
-                            help();
+                            ShowHelp();
                             return P;
                         }
                     }
                 }
             }
 
+            if (!string.IsNullOrEmpty(P.inFile) && P.inFormat == Format.Autodetect)
+            {
+                P.inFormat = DetectFormat(P.inFile);
+                if (P.inFormat == Format.Invalid)
+                {
+                    Console.Error.WriteLine("Input file format not specified and not detectable");
+                    P.OK = false;
+                    ShowHelp();
+                }
+            }
             if (!string.IsNullOrEmpty(P.outFile) && P.outFormat == Format.Autodetect)
             {
-                Console.WriteLine("output file format not specified");
-                P.OK = false;
-                help();
-                return P;
+                P.outFormat = DetectFormat(P.outFile);
+                if (P.outFormat == Format.Invalid)
+                {
+                    Console.Error.WriteLine("Output file format not specified and not detectable");
+                    P.OK = false;
+                    ShowHelp();
+                }
             }
 
             return P;
@@ -1738,13 +1775,13 @@ namespace mazeTools
         /// </summary>
         /// <param name="p">string input</param>
         /// <returns>format (Format.Invalid on errors)</returns>
-        private static Format getFormat(string p)
+        private static Format GetFormat(string FormatString)
         {
-            if (p.ToUpper() != "INVALID")
+            if (FormatString.ToUpper() != "INVALID")
             {
                 try
                 {
-                    return (Format)Enum.Parse(typeof(Format), p, true);
+                    return (Format)Enum.Parse(typeof(Format), FormatString, true);
                 }
                 catch
                 {
@@ -1756,9 +1793,9 @@ namespace mazeTools
         /// <summary>
         /// prints extended help
         /// </summary>
-        private static void help()
+        private static void ShowHelp()
         {
-            Console.WriteLine(@"Maze Tools
+            Console.Error.WriteLine(@"Maze Tools
 mazeTools.exe [/W:<number>] [/H:<number>] [/M:<number>] [/S] [/O:<format>]
               [/I:<format>] [/G] [/FOW] [/R:<infile>] [/P:<outfile>] [/MAP]
 
@@ -1848,9 +1885,9 @@ Does not affects save file.");
         /// </summary>
         /// <param name="p">possibly even number</param>
         /// <returns>uneven number</returns>
-        private static int uneven(int p)
+        private static int Uneven(int Number)
         {
-            return p % 2 == 0 ? p - 1 : p;
+            return Number % 2 == 0 ? Number - 1 : Number;
         }
     }
 }
