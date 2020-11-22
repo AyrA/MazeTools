@@ -1808,8 +1808,8 @@ mazeTools.exe [/W:<number>] [/H:<number>] [/M:<number>] [/S] [/O:<format>]
 /H:<number>   Height of the maze, if not specified, window height is used
 /M:<number>   Output multiplication factor, 1 or bigger. Default: 1
               this only affects image inputs and outputs
-/O:<format>   Output format (see below), defaults to UTF
-/I:<format>   Input format (see below), defaults to UTF
+/O:<format>   Output format (see below), defaults to UTF-8
+/I:<format>   Input format (see below), defaults to UTF-8
 /S            Solves the Maze
 /G            Game: Allow the user to solve manually
 /FOW          Fog of war: maze is invisible except for current player view
@@ -1837,7 +1837,7 @@ Formats:      Numbered: Output consists of Numbers only (with line breaks):
                         E=end
                         .=solution
                         !=Player
-              UTF: similar to ASCII but with multibyte chars
+              UTF: similar to ASCII but with UTF-8 characters
                   (space)=way
                         █=wall
                         S=start
