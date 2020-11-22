@@ -55,18 +55,5 @@ namespace mazeTools
             public const char PLAYER = '!';
             public const char INVALID = '?';
         };
-        /// <summary>
-        /// Numbered file format
-        /// </summary>
-        public static class Numbered
-        {
-            public const char WAY = '0';
-            public const char WALL = '1';
-            public const char START = '2';
-            public const char END = '3';
-            public const char VISITED = '4';
-            public const char PLAYER = '5';
-            public const char INVALID = '6';
-        }
     }
 }
