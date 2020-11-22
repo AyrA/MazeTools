@@ -12,11 +12,8 @@ namespace mazeTools
     public enum FileFormat : int
     {
         Autodetect = 0,
-        Numbered = 1,
-        ASCII = 2,
-        UTF = 3,
-        CSV = 4,
-        Binary = 5,
-        Image = 6
+        ASCII = 1,
+        UTF = 2,
+        Image = 3
     }
 }
