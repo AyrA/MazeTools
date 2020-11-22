@@ -258,13 +258,28 @@ namespace mazeTools
             {
                 InFormat = DetectFormatFromFile(InFile);
             }
-            if (OutFormat == FileFormat.Autodetect && OutFile != null)
+            if (OutFormat == FileFormat.Autodetect)
             {
-                OutFormat = DetectFormatFromExtension(Path.GetExtension(OutFile));
+                if (OutFile != null)
+                {
+                    OutFormat = DetectFormatFromExtension(Path.GetExtension(OutFile));
+                }
+                else
+                {
+                    OutFormat = FileFormat.UTF;
+                }
             }
             if (InFormat != FileFormat.Image && OutFormat != FileFormat.Image && Scale > 0)
             {
                 throw new ArgumentException("/S only applies to images but neither input nor output is an image");
+            }
+            if (Width == 0)
+            {
+                Width = Uneven(Console.WindowWidth);
+            }
+            if (Height == 0)
+            {
+                Height = Uneven(Console.WindowHeight);
             }
 
             #endregion
