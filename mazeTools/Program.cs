@@ -5,158 +5,12 @@ using System.Collections;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 
 namespace mazeTools
 {
     class Program
     {
-        /// <summary>
-        /// Lists possible file formats
-        /// </summary>
-        private enum Format
-        {
-            Invalid,
-            Autodetect,
-            Numbered,
-            ASCII,
-            UTF,
-            CSV,
-            Binary,
-            Image
-        }
-
-        /// <summary>
-        /// struct to hold all command line arguments
-        /// </summary>
-        private struct CmdParams
-        {
-            /// <summary>
-            /// Width
-            /// </summary>
-            public int W;
-            /// <summary>
-            /// Height
-            /// </summary>
-            public int H;
-            /// <summary>
-            /// Scale
-            /// </summary>
-            public int S;
-            /// <summary>
-            /// Solve maze?
-            /// </summary>
-            public bool solve;
-            /// <summary>
-            /// true, if arguments passed validation
-            /// </summary>
-            public bool OK;
-            /// <summary>
-            /// allow the user to play the maze
-            /// </summary>
-            public bool play;
-            /// <summary>
-            /// fog of war
-            /// </summary>
-            public bool fow;
-            /// <summary>
-            /// Enables the map
-            /// </summary>
-            public bool map;
-            /// <summary>
-            /// output File
-            /// </summary>
-            public string outFile;
-            /// <summary>
-            /// input File
-            /// </summary>
-            public string inFile;
-            /// <summary>
-            /// Output Format
-            /// </summary>
-            public Format outFormat;
-            /// <summary>
-            /// Input Format
-            /// </summary>
-            public Format inFormat;
-        }
-
-        /// <summary>
-        /// struct to hold chars for output and input
-        /// </summary>
-        private struct Chars
-        {
-            /// <summary>
-            /// UTF-8 corner pieces
-            /// </summary>
-            public struct Corners
-            {
-                public const char NS = '│';
-                public const char EW = '─';
-                public const char NE = '└';
-                public const char NW = '┘';
-                public const char SE = '┌';
-                public const char SW = '┐';
-                public const char NESW = '┼';
-                public const char NES = '├';
-                public const char NWS = '┤';
-                public const char NEW = '┴';
-                public const char SEW = '┬';
-                public const char Unknown = '■';
-            }
-            /// <summary>
-            /// UTF-8 chars
-            /// </summary>
-            public struct UTF
-            {
-                public const char WALL = '█';
-                public const char WAY = ' ';
-                public const char START = 'S';
-                public const char END = 'E';
-                public const char VISITED = '░';
-                public const char PLAYER = '☺';
-                public const char INVALID = '?';
-            };
-            /// <summary>
-            /// 7-bit ASCII chars
-            /// </summary>
-            public struct ASCII
-            {
-                public const char WALL = '#';
-                public const char WAY = ' ';
-                public const char START = 'S';
-                public const char END = 'E';
-                public const char VISITED = '.';
-                public const char PLAYER = '!';
-                public const char INVALID = '?';
-            };
-            /// <summary>
-            /// Numbered file format
-            /// </summary>
-            public struct Numbered
-            {
-                public const char WAY = '0';
-                public const char WALL = '1';
-                public const char START = '2';
-                public const char END = '3';
-                public const char VISITED = '4';
-                public const char PLAYER = '5';
-                public const char INVALID = '6';
-            }
-        }
-        /// <summary>
-        /// colors for image input and output
-        /// </summary>
-        private struct Colors
-        {
-            public const int WALL = -16777216;
-            public const int WAY = -1;
-            public const int START = -16711936;
-            public const int END = -65536;
-            public const int VISITED = -256;
-            public const int PLAYER = -65281;
-            public const int INVALID = -16711681;
-        }
-
         /// <summary>
         /// line break
         /// </summary>
@@ -176,14 +30,27 @@ namespace mazeTools
             args = new string[]
             {
                 //"/S",
-                //"/W:10000",
-                //"/H:10000",
-                @"/R:..\Release\solved.png",
-                @"/P:..\Release\Stupidly_Large_Maze.png"
+                //"/W", "10000",
+                //"/H", "10000",
+                "/R", @"..\Release\solved.png",
+                "/P", @"..\Release\Stupidly_Large_Maze.png"
             };
 #endif
-
-            CmdParams P = ParseArgs(args);
+            if (args.Length == 0 || args.Contains("/?"))
+            {
+                ShowHelp();
+                return 0;
+            }
+            CmdParams P;
+            try
+            {
+                P = new CmdParams(args);
+            }
+            catch(Exception ex)
+            {
+                Console.Error.WriteLine("Invalid arguments: {0}", ex.Message);
+                return 0;
+            }
 
             if (P.OK)
             {
@@ -206,7 +73,7 @@ namespace mazeTools
                     Console.Error.WriteLine("Generating maze...");
                     M.generate2(P.W, P.H);
                 }
-                if (P.outFormat != Format.Binary && !P.play)
+                if (P.outFormat != FileFormat.Binary && !P.play)
                 {
                     if (P.solve)
                     {
@@ -338,7 +205,7 @@ namespace mazeTools
                         } while (IsCorridor(maze, posX, posY, Maze.Dir.E));
                         break;
                     case ConsoleKey.S:
-                        WriteFile(FileName, maze, Format.UTF, 1);
+                        WriteFile(FileName, maze, FileFormat.UTF, 1);
                         break;
                     default:
                         break;
@@ -836,7 +703,7 @@ namespace mazeTools
         /// </summary>
         /// <param name="maze">maze</param>
         /// <param name="f">format</param>
-        private static void WriteConsole(byte[,] MazeArea, Format FileFormat)
+        private static void WriteConsole(byte[,] MazeArea, FileFormat FileFormat)
         {
             int w, h, x, y;
             w = MazeArea.GetLength(0);
@@ -846,7 +713,7 @@ namespace mazeTools
 
             switch (FileFormat)
             {
-                case Format.ASCII:
+                case FileFormat.ASCII:
                     WALL = Chars.ASCII.WALL;
                     WAY = Chars.ASCII.WAY;
                     START = Chars.ASCII.START;
@@ -855,8 +722,8 @@ namespace mazeTools
                     PLAYER = Chars.ASCII.PLAYER;
                     INVALID = Chars.ASCII.INVALID;
                     break;
-                case Format.Numbered:
-                case Format.CSV:
+                case FileFormat.Numbered:
+                case FileFormat.CSV:
                     WALL = Chars.Numbered.WALL;
                     WAY = Chars.Numbered.WAY;
                     START = Chars.Numbered.START;
@@ -865,7 +732,7 @@ namespace mazeTools
                     PLAYER = Chars.Numbered.PLAYER;
                     INVALID = Chars.Numbered.INVALID;
                     break;
-                case Format.UTF:
+                case FileFormat.UTF:
                     WALL = Chars.UTF.WALL;
                     WAY = Chars.UTF.WAY;
                     START = Chars.UTF.START;
@@ -901,7 +768,7 @@ namespace mazeTools
                             break;
                         case Maze.CellType.VISITED:
                             Console.ForegroundColor = ConsoleColor.Yellow;
-                            if (FileFormat == Format.UTF)
+                            if (FileFormat == FileFormat.UTF)
                             {
                                 Console.Write(GetFancyTile(MazeArea, x, y, Chars.Corners.Unknown));
                             }
@@ -919,7 +786,7 @@ namespace mazeTools
                             Console.Write(INVALID);
                             break;
                     }
-                    if (x < w - 1 && FileFormat == Format.CSV)
+                    if (x < w - 1 && FileFormat == FileFormat.CSV)
                     {
                         Console.Write(',');
                     }
@@ -936,7 +803,7 @@ namespace mazeTools
         /// <param name="maze">maze</param>
         /// <param name="f">format</param>
         /// <param name="scale">scale (for images only)</param>
-        private static void WriteFile(string FileName, byte[,] MazeArea, Format FileFormat, int Scale)
+        private static void WriteFile(string FileName, byte[,] MazeArea, FileFormat FileFormat, int Scale)
         {
             int w, h, x, y;
             w = MazeArea.GetLength(0);
@@ -947,7 +814,7 @@ namespace mazeTools
 
             switch (FileFormat)
             {
-                case Format.ASCII:
+                case FileFormat.ASCII:
                     WALL = Chars.ASCII.WALL;
                     WAY = Chars.ASCII.WAY;
                     START = Chars.ASCII.START;
@@ -956,8 +823,8 @@ namespace mazeTools
                     PLAYER = Chars.ASCII.PLAYER;
                     INVALID = Chars.ASCII.INVALID;
                     break;
-                case Format.Numbered:
-                case Format.CSV:
+                case FileFormat.Numbered:
+                case FileFormat.CSV:
                     WALL = Chars.Numbered.WALL;
                     WAY = Chars.Numbered.WAY;
                     START = Chars.Numbered.START;
@@ -966,7 +833,7 @@ namespace mazeTools
                     PLAYER = Chars.Numbered.PLAYER;
                     INVALID = Chars.Numbered.INVALID;
                     break;
-                case Format.UTF:
+                case FileFormat.UTF:
                     WALL = Chars.UTF.WALL;
                     WAY = Chars.UTF.WAY;
                     START = Chars.UTF.START;
@@ -991,7 +858,7 @@ namespace mazeTools
                 throw new Exception("Cannot delete existing file");
             }
 
-            if (FileFormat == Format.ASCII || FileFormat == Format.CSV || FileFormat == Format.Numbered || FileFormat == Format.UTF)
+            if (FileFormat == FileFormat.ASCII || FileFormat == FileFormat.CSV || FileFormat == FileFormat.Numbered || FileFormat == FileFormat.UTF)
             {
                 StreamWriter SW;
                 try
@@ -1022,7 +889,7 @@ namespace mazeTools
                                 SW.Write(END);
                                 break;
                             case Maze.CellType.VISITED:
-                                if (FileFormat == Format.UTF)
+                                if (FileFormat == FileFormat.UTF)
                                 {
                                     SW.Write(GetFancyTile(MazeArea, x, y, Chars.Corners.Unknown));
                                 }
@@ -1038,7 +905,7 @@ namespace mazeTools
                                 SW.Write(INVALID);
                                 break;
                         }
-                        if (x < w - 1 && FileFormat == Format.CSV)
+                        if (x < w - 1 && FileFormat == FileFormat.CSV)
                         {
                             SW.Write(',');
                         }
@@ -1053,11 +920,11 @@ namespace mazeTools
                 SW.Close();
                 SW.Dispose();
             }
-            else if (FileFormat == Format.Binary)
+            else if (FileFormat == FileFormat.Binary)
             {
                 WriteBinary(FileName, MazeArea);
             }
-            else if (FileFormat == Format.Image)
+            else if (FileFormat == FileFormat.Image)
             {
                 WriteImage(FileName, MazeArea, Scale);
             }
@@ -1250,13 +1117,13 @@ namespace mazeTools
         /// <param name="format">input data format</param>
         /// <param name="scale">scale factor (images only)</param>
         /// <returns>maze</returns>
-        private static byte[,] ParseFile(string FileName, Format FileFormat, int Scale)
+        private static byte[,] ParseFile(string FileName, FileFormat FileFormat, int Scale)
         {
-            Format f = FileFormat;
-            if (f == Format.Autodetect)
+            FileFormat f = FileFormat;
+            if (f == FileFormat.Autodetect)
             {
                 f = DetectFormat(FileName);
-                if (f == Format.Invalid)
+                if (f == FileFormat.Invalid)
                 {
                     throw new Exception("Autodetect failed: text file of unknown format");
                 }
@@ -1266,19 +1133,19 @@ namespace mazeTools
 
             switch (f)
             {
-                case Format.Binary:
+                case FileFormat.Binary:
                     s = FromBinary(FileName);
                     break;
-                case Format.Image:
+                case FileFormat.Image:
                     s = FromImage(FileName, Scale);
                     break;
-                case Format.CSV:
+                case FileFormat.CSV:
                     s = File.ReadAllText(FileName)
                         .Replace(",", "")
                         .Replace(";", "")
                         .Replace("\t", "");
                     break;
-                case Format.ASCII:
+                case FileFormat.ASCII:
                     s = File.ReadAllText(FileName)
                         .Replace(Chars.ASCII.WALL, Chars.Numbered.WALL)
                         .Replace(Chars.ASCII.WAY, Chars.Numbered.WAY)
@@ -1287,10 +1154,10 @@ namespace mazeTools
                         .Replace(Chars.ASCII.VISITED, Chars.Numbered.VISITED)
                         .Replace(Chars.ASCII.PLAYER, Chars.Numbered.PLAYER);
                     break;
-                case Format.Numbered:
+                case FileFormat.Numbered:
                     s = File.ReadAllText(FileName);
                     break;
-                case Format.UTF:
+                case FileFormat.UTF:
                     s = File.ReadAllText(FileName)
                         .Replace(Chars.UTF.WALL, Chars.Numbered.WALL)
                         .Replace(Chars.UTF.WAY, Chars.Numbered.WAY)
@@ -1515,7 +1382,7 @@ namespace mazeTools
         /// </summary>
         /// <param name="FileName">File name</param>
         /// <returns>Detected Format</returns>
-        private static Format DetectFormat(string FileName)
+        private static FileFormat DetectFormat(string FileName)
         {
             string Ext = "";
             if (FileName.Contains(".") && FileName.LastIndexOf('.') > FileName.LastIndexOf('\\'))
@@ -1525,36 +1392,36 @@ namespace mazeTools
             switch (Ext)
             {
                 case "bin":
-                    return Format.Binary;
+                    return FileFormat.Binary;
                 case "png":
-                    return Format.Image;
+                    return FileFormat.Image;
                 case "csv":
-                    return Format.CSV;
+                    return FileFormat.CSV;
                 case "txt":
                     if (File.Exists(FileName))
                     {
                         switch (GetFirst(FileName))
                         {
                             case Chars.Numbered.WALL:
-                                return Format.Numbered;
+                                return FileFormat.Numbered;
                             case Chars.UTF.WALL:
-                                return Format.UTF;
+                                return FileFormat.UTF;
                             case Chars.ASCII.WALL:
-                                return Format.ASCII;
+                                return FileFormat.ASCII;
                             default:
-                                return Format.Invalid;
+                                return FileFormat.Invalid;
                         }
                     }
                     else
                     {
-                        return Format.UTF;
+                        return FileFormat.UTF;
                     }
                 default:
                     Console.Error.WriteLine("Can't detect File format properly");
                     ShowHelp();
                     break;
             }
-            return Format.Invalid;
+            return FileFormat.Invalid;
         }
 
         /// <summary>
@@ -1568,8 +1435,8 @@ namespace mazeTools
             P.W = Uneven(Console.WindowWidth - 1);
             P.H = Uneven(Console.WindowHeight - 1);
             P.S = 1;
-            P.outFormat = Format.Autodetect;
-            P.inFormat = Format.Autodetect;
+            P.outFormat = FileFormat.Autodetect;
+            P.inFormat = FileFormat.Autodetect;
             P.outFile = null;
             P.inFile = null;
             P.solve = false;
@@ -1651,7 +1518,7 @@ namespace mazeTools
                                     }
                                     break;
                                 case "/O:":
-                                    if (GetFormat(arg.Substring(3)) != Format.Invalid)
+                                    if (GetFormat(arg.Substring(3)) != FileFormat.Invalid)
                                     {
                                         P.outFormat = GetFormat(arg.Substring(3));
                                     }
@@ -1664,7 +1531,7 @@ namespace mazeTools
                                     }
                                     break;
                                 case "/I:":
-                                    if (GetFormat(arg.Substring(3)) != Format.Invalid)
+                                    if (GetFormat(arg.Substring(3)) != FileFormat.Invalid)
                                     {
                                         P.inFormat = GetFormat(arg.Substring(3));
                                     }
@@ -1720,30 +1587,30 @@ namespace mazeTools
                 }
             }
 
-            if (!string.IsNullOrEmpty(P.inFile) && P.inFormat == Format.Autodetect)
+            if (!string.IsNullOrEmpty(P.inFile) && P.inFormat == FileFormat.Autodetect)
             {
                 P.inFormat = DetectFormat(P.inFile);
-                if (P.inFormat == Format.Invalid)
+                if (P.inFormat == FileFormat.Invalid)
                 {
                     Console.Error.WriteLine("Input file format not specified and not detectable");
                     P.OK = false;
                     ShowHelp();
                 }
             }
-            if (!string.IsNullOrEmpty(P.outFile) && P.outFormat == Format.Autodetect)
+            if (!string.IsNullOrEmpty(P.outFile) && P.outFormat == FileFormat.Autodetect)
             {
                 P.outFormat = DetectFormat(P.outFile);
-                if (P.outFormat == Format.Invalid)
+                if (P.outFormat == FileFormat.Invalid)
                 {
                     Console.Error.WriteLine("Output file format not specified and not detectable");
                     P.OK = false;
                     ShowHelp();
                 }
             }
-            else if (string.IsNullOrEmpty(P.outFile) && P.outFormat == Format.Autodetect)
+            else if (string.IsNullOrEmpty(P.outFile) && P.outFormat == FileFormat.Autodetect)
             {
                 //Use UTF-8 for console if no inout file has been specified
-                P.outFormat = Format.UTF;
+                P.outFormat = FileFormat.UTF;
             }
 
             return P;
@@ -1780,19 +1647,19 @@ namespace mazeTools
         /// </summary>
         /// <param name="p">string input</param>
         /// <returns>format (Format.Invalid on errors)</returns>
-        private static Format GetFormat(string FormatString)
+        private static FileFormat GetFormat(string FormatString)
         {
             if (FormatString.ToUpper() != "INVALID")
             {
                 try
                 {
-                    return (Format)Enum.Parse(typeof(Format), FormatString, true);
+                    return (FileFormat)Enum.Parse(typeof(FileFormat), FormatString, true);
                 }
                 catch
                 {
                 }
             }
-            return Format.Invalid;
+            return FileFormat.Invalid;
         }
 
         /// <summary>
@@ -1801,22 +1668,22 @@ namespace mazeTools
         private static void ShowHelp()
         {
             Console.Error.WriteLine(@"Maze Tools
-mazeTools.exe [/W:<number>] [/H:<number>] [/M:<number>] [/S] [/O:<format>]
-              [/I:<format>] [/G] [/FOW] [/R:<infile>] [/P:<outfile>] [/MAP]
+mazeTools.exe [/W <number>] [/H <number>] [/M <number>] [/S] [/O <format>]
+              [/I <format>] [/G] [/FOW] [/R <infile>] [/P <outfile>] [/MAP]
 
-/W:<number>   Width of the maze, if not specified, window width is used
-/H:<number>   Height of the maze, if not specified, window height is used
-/M:<number>   Output multiplication factor, 1 or bigger. Default: 1
+/W <number>   Width of the maze, if not specified, window width is used
+/H <number>   Height of the maze, if not specified, window height is used
+/M <number>   Output multiplication factor, 1 or bigger. Default: 1
               this only affects image inputs and outputs
-/O:<format>   Output format (see below), defaults to UTF-8
-/I:<format>   Input format (see below), defaults to UTF-8
+/O <format>   Output format (see below), defaults to UTF-8
+/I <format>   Input format (see below), defaults to UTF-8
 /S            Solves the Maze
 /G            Game: Allow the user to solve manually
 /FOW          Fog of war: maze is invisible except for current player view
 /MAP          Map: once uncovered tiles (using /FOW) will stay visible
-/R:<infile>   input file, if not specified, a maze is generated using
+/R <infile>   input file, if not specified, a maze is generated using
               W and H arguments. If specified, W and H are ignored
-/P:<outfile>  output file, if not specified, the console is used (stdout)
+/P <outfile>  output file, if not specified, the console is used (stdout)
 
 Mazes always start at the top left corner and end at the bottom right corner.
 Loading a maze from file (except binary) will find start and end.

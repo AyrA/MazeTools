@@ -45,7 +45,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsMaze.cs" />
+    <Compile Include="Chars.cs" />
+    <Compile Include="Maze.cs" />
+    <Compile Include="CmdArgs.cs" />
+    <Compile Include="Colors.cs" />
+    <Compile Include="FileFormat.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
