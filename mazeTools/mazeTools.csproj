@@ -38,6 +38,15 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>false</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>5EB3C715A5CE5320B460FE7D5A56AE6C0871DEC9</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -46,10 +55,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Chars.cs" />
+    <Compile Include="IO.cs" />
     <Compile Include="Maze.cs" />
     <Compile Include="CmdArgs.cs" />
     <Compile Include="Colors.cs" />
     <Compile Include="FileFormat.cs" />
+    <Compile Include="MazeOperations.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -65,6 +76,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>C:\BAT\autosign.bat $(TargetPath)</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
