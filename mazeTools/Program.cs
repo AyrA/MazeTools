@@ -29,14 +29,14 @@ namespace mazeTools
 #if DEBUG
             args = new string[]
             {
-                //"/S",
-                "/W", "1000",
-                "/H", "1000",
+                "/G","/FOW","/MAP",
+                //"/W", "20",
+                //"/H", "20",
                 //"/R", @"..\Release\solved.png",
-                "/O", @"R:\Stupidly_Large_Maze.png"
+                //"/O", @"R:\Stupidly_Large_Maze.png"
             };
 #endif
-            if (args.Length == 0 || args.Contains("/?"))
+            if (args.Contains("/?"))
             {
                 ShowHelp();
                 return 0;
